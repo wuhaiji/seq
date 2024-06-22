@@ -80,7 +80,7 @@ public interface Seq<T> {
         return map;
     }
     
-    default <K, V> Map<K, V> toMapNonNull(
+    default <K, V> Map<K, V> toMapNotNull(
             Function<T, K> keyFn,
             Function<T, V> valueFn,
             // 元素冲突时默认采取策略（保留旧值，还是新值）
@@ -103,7 +103,7 @@ public interface Seq<T> {
     }
     
     // 元素冲突时默认采取新值放入map
-    default <K, V> Map<K, V> toMapNonNull(
+    default <K, V> Map<K, V> toMapNotNull(
             Function<T, K> keyFn,
             Function<T, V> valueFn
     ) {
