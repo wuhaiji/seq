@@ -11,6 +11,7 @@ import java.util.stream.Stream;
  * @param <T> 元素类型
  */
 @FunctionalInterface
+@SuppressWarnings("unchecked")
 public interface Seq<T> {
     
     void consume(Consumer<T> consumer);
@@ -32,8 +33,8 @@ public interface Seq<T> {
     
     static <T> Seq<T> of(Iterator<T> iterable) {
         return c -> {
-            for (Iterator<T> it = iterable; it.hasNext(); ) {
-                T t = it.next();
+            while (iterable.hasNext()) {
+                T t = iterable.next();
                 c.accept(t);
             }
             
@@ -295,30 +296,168 @@ public interface Seq<T> {
         return length() == 0;
     }
     
-    default boolean matchAny(T e) {
-        try {
-            return foldl(
-                    (r, t) -> {
-                        if (r) {
-                            // 直接跳出循环
-                            SeqStopException.stop();
-                            return true;
-                        } else {
-                            return t.equals(e);
-                        }
-                    },
-                    false
-            );
-        } catch (SeqStopException ex) {
-            return true;
-        }
+    default Optional<T> head() {
+        return Optional.ofNullable(foldl(
+                (r, t) -> {
+                    if (r == null) {
+                        return t;
+                    } else {
+                        return r;
+                    }
+                },
+                null
+        ));
     }
     
-    default <R> Seq<R> map(BiFunction<T, Integer, R> mapFn) {
+    default Optional<T> last() {
+        return Optional.ofNullable(foldr(
+                (t, r) -> {
+                    if (r == null) {
+                        return t;
+                    } else {
+                        return r;
+                    }
+                },
+                null
+        ));
+    }
+    
+    default Seq<T> distinct() {
+        return distinctBy(v -> v);
+    }
+    
+    default Seq<T> distinctBy(Function<T, ?> keyExtractor) {
         return c -> {
-            int[] i = {0};
-            this.consume(t -> c.accept(mapFn.apply(t, i[0]++)));
+            Set<Object> set = new HashSet<>();
+            this.consume(t -> {
+                Object key = keyExtractor.apply(t);
+                if (!set.contains(key)) {
+                    set.add(key);
+                    c.accept(t);
+                }
+            });
         };
     }
     
+    // filterNotNull
+    default Seq<T> filterNotNull() {
+        return c -> this.consume(t -> {
+            if (t != null) {
+                c.accept(t);
+            }
+        });
+    }
+    
+    // mapNotNull
+    default <R> Seq<R> mapNotNull(Function<T, R> mapper) {
+        return c -> this.consume(t -> {
+            if (t != null) {
+                c.accept(mapper.apply(t));
+            }
+        });
+    }
+    
+    // mapUntilNull
+    default <R> Seq<R> mapUntilNull(Function<T, R> mapper) {
+        return c -> this.consume(t -> {
+            R r = mapper.apply(t);
+            if (r != null) {
+                c.accept(r);
+            } else {
+                SeqStopException.stop();
+            }
+        });
+    }
+    
+    // tail
+    default Seq<T> tail() {
+        return c -> {
+            final boolean[] first = {true};
+            this.consume(t -> {
+                if (!first[0]) {
+                    c.accept(t);
+                } else {
+                    first[0] = false;
+                }
+            });
+        };
+    }
+    
+    // last
+    default Seq<T> last(int n) {
+        return c -> {
+            final int[] i = {0};
+            this.consume(t -> {
+                if (i[0] >= n) {
+                    c.accept(t);
+                }
+                i[0]++;
+            });
+        };
+    }
+    
+    
+    default Optional<T> findFirst(Predicate<T> predicate) {
+        Object[] b = {null};
+        consumeUtilStop(t -> {
+            if (predicate.test(t)) {
+                b[0] = t;
+                SeqStopException.stop();
+            }
+        });
+        return Optional.ofNullable((T) b[0]);
+    }
+    
+    // anyMatch
+    default boolean anyMatch(Predicate<T> predicate) {
+        return findFirst(predicate).isPresent();
+    }
+    
+    // allMatch
+    default boolean allMatch(Predicate<T> predicate) {
+        return foldl((r, t) -> r && predicate.test(t), true);
+    }
+    
+    // noneMatch
+    default boolean noneMatch(Predicate<T> predicate) {
+        return anyMatch(predicate);
+    }
+    
+    // sort
+    default Seq<T> sort(Comparator<T> comparator) {
+        return c -> {
+            List<T> list = new ArrayList<>();
+            this.consume(list::add);
+            list.sort(comparator);
+            list.forEach(c);
+        };
+    }
+    
+    // sortBy
+    default <R> Seq<T> sortBy(Function<T, R> keyExtractor, Comparator<R> comparator) {
+        Comparator<T> keyComparator = (t1, t2) -> comparator.compare(keyExtractor.apply(t1), keyExtractor.apply(t2));
+        return c -> this.sort(keyComparator).consume(c);
+    }
+    
+    default <R extends Comparable<R>> Seq<T> sortBy(Function<T, R> keyExtractor) {
+        return c -> this.sort(Comparator.comparing(keyExtractor));
+    }
+    
+    // min
+    default <R extends Comparable<R>> Optional<T> min(Function<T, R> keyExtractor) {
+        Comparator<T> comparator = Comparator.comparing(keyExtractor);
+        return this.sort(comparator).head();
+    }
+    
+    // max
+    default <R extends Comparable<R>> Optional<T> max(Function<T, R> keyExtractor) {
+        Comparator<T> comparator = Comparator.comparing(keyExtractor).reversed();
+        return this.sort(comparator).head();
+    }
+    
 }
+
+
+
+
+
