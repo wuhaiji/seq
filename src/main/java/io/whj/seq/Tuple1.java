@@ -4,10 +4,10 @@ import java.util.Objects;
 
 // Tuple1 class
 public class Tuple1<T> implements Tuple {
-    private final T _1;
+    private final T first;
     
-    public Tuple1(T _1) {
-        this._1 = _1;
+    public Tuple1(T first) {
+        this.first = first;
     }
     
     public static <T> io.whj.seq.Tuple1<T> of(T t) {
@@ -15,12 +15,12 @@ public class Tuple1<T> implements Tuple {
     }
     
     public T _1() {
-        return _1;
+        return first;
     }
     
     @Override
     public String toString() {
-        return "(" + _1 + ")";
+        return "(" + first + ")";
     }
     
     @Override
@@ -28,11 +28,11 @@ public class Tuple1<T> implements Tuple {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         io.whj.seq.Tuple1<?> tuple = (io.whj.seq.Tuple1<?>) o;
-        return Objects.equals(_1, tuple._1);
+        return Objects.equals(first, tuple.first);
     }
     
     @Override
     public int hashCode() {
-        return Objects.hash(_1);
+        return Objects.hash(first);
     }
 }

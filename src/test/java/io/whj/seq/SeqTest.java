@@ -279,7 +279,6 @@ class SeqTest {
     }
     
     
-    
     @Test
     public void testCreateMethods() {
         Seq<Integer> seq = Seq.of(1, 2, 3);
@@ -351,5 +350,16 @@ class SeqTest {
         String joinString = seq.zipWith(Seq.of('a', 'b', 'c').toList(), (q, w) -> q + "_" + w).toJoinString(",");
         
         Assertions.assertEquals("1_a,2_b,3_c", joinString);
+    }
+    
+    
+    // 写个seq.pairs测试函数
+    @Test
+    void pairs() {
+        Seq<Integer> seq = Seq.of(1, 2, 3, 4, 5);
+        
+        String joinString = seq.pairs().map(v -> v.toString()).toJoinString(", ");
+        
+        Assertions.assertEquals("(1, 2), (2, 3), (3, 4), (4, 5)", joinString);
     }
 }
