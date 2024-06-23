@@ -63,7 +63,7 @@ public interface Seq<T> {
     
     default String toJoinString(String prefix, String delimiter, String suffix) {
         StringJoiner stringJoiner = new StringJoiner(delimiter);
-        consume(t -> stringJoiner.add(t.toString()));
+        consume(t -> stringJoiner.add(String.valueOf(t)));
         return prefix + stringJoiner + suffix;
     }
     
@@ -454,6 +454,41 @@ public interface Seq<T> {
         Comparator<T> comparator = Comparator.comparing(keyExtractor).reversed();
         return this.sort(comparator).head();
     }
+    
+    
+    // 集合内两两结合的函数
+    default Seq<Tuple2<T, T>> pairs() {
+        return c -> {
+            Object[] pre = {null};
+            this.consume(t -> {
+                if (pre[0] != null) {
+                    c.accept(Tuple.of((T) pre[0], t));
+                }
+                pre[0] = t;
+            });
+        };
+    }
+    
+    // 集合内两两结合的函数
+    default Seq<Tuple3<T, T, T>> triples() {
+        return c -> {
+            Object[] pre = {null, null};
+            this.consume(t -> {
+                pre[0] = pre[1];
+                pre[1] = t;
+            });
+            if (pre[0] != null && pre[1] != null) {
+                c.accept(Tuple.of((T) pre[0], (T) pre[1], null));
+            } else if (pre[0] != null) {
+                c.accept(Tuple.of((T) pre[0], null, null));
+            } else if (pre[1] != null) {
+                c.accept(Tuple.of(null, (T) pre[1], null));
+            } else {
+                c.accept(Tuple.of(null, null, null));
+            }
+        };
+    }
+    
     
 }
 
