@@ -1,6 +1,7 @@
 package io.whj.seq.controls;
 
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -21,16 +22,13 @@ public abstract class Option<T> {
         return isNone() ? (T) none() : get();
     }
     
-    public <U> Option<U> map(Function<? super T, ? extends U> mapper) {
-        return isNone() ? none() : ofNullable(mapper.apply(this.get()));
+    public <U> Option<Option<U>> map(Function<? super T, ? extends U> mapper) {
+        return isNone() ? none() : some(ofNullable(mapper.apply(this.get())));
     }
     
     public <U> Option<U> flatMap(Function<? super T, Option<U>> mapper) {
-        Option<U> mapped = mapper.apply(this.get());
-        if (mapped == null) {
-            return none();
-        }
-        return isNone() ? none() : mapped;
+        T t = this.get();
+        return isNone() ? none() : mapper.apply(t);
     }
     
     public Option<T> filter(Predicate<T> predicate) {
@@ -90,6 +88,14 @@ public abstract class Option<T> {
             return None.none();
         }
         return new Some<>(value);
+    }
+    
+    public Optional<T> toOptional() {
+        if (isNone()) {
+            return Optional.empty();
+        } else {
+            return Optional.ofNullable(this.get());
+        }
     }
     
     

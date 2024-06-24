@@ -1,5 +1,6 @@
 package io.whj.seq.seqs;
 
+import io.whj.seq.controls.Option;
 import io.whj.seq.tuples.Tuple;
 import io.whj.seq.tuples.Tuple2;
 
@@ -34,14 +35,6 @@ public interface Seq<T> {
                 c.accept(t);
             }
         };
-    }
-    
-    static <T> Seq<T> none() {
-        return (Seq<T>) NONE;
-    }
-    
-    static <T> Seq<T> some(T t) {
-        return unit(t);
     }
     
     static <T> Seq<T> of(Iterator<T> iterable) {
@@ -283,19 +276,33 @@ public interface Seq<T> {
         };
     }
     
-    
-    default Seq<Seq<T>> finite() {
+    default <E> BiSeq<T, E> zipWith(Seq<Option<E>> other) {
         return c -> {
-            this.consume(t -> {
-                c.accept(some(t));
+            consumeUtilStop(t -> {
+                other.consume(e -> {
+                    if (e.isNone()) {
+                        Stop.stop();
+                    } else {
+                        c.accept(t, e.get());
+                    }
+                });
             });
-            c.accept(none());
+        };
+    }
+    
+    /**
+     * 使用option包装，最后会额外生成一个none的元素指示seq流已耗尽
+     */
+    default Seq<Option<T>> wrapWithOption() {
+        return c -> {
+            this.consume(t -> c.accept(Option.ofNullable(t)));
+            c.accept(Option.none());
         };
     }
     
     // 转化为带索引的流
     default BiSeq<T, Integer> zipWithIndex() {
-        return this.zipWith(naturalNumbers().toList());
+        return this.zipWith(naturalNumbers().wrapWithOption());
     }
     
     // 集合内两两结合的函数
