@@ -291,9 +291,9 @@ public interface Seq<T> {
     }
     
     /**
-     * 使用 more 包装，最后会额外生成一个none的元素指示seq流已耗尽
+     * 使用 more 信号包装成无限流，最后一直返回none的元素指示seq流已耗尽
      */
-    default Seq<More<T>> hasMore() {
+    default Seq<More<T>> more() {
         return c -> {
             this.consume(t -> c.accept(More.some(t)));
             while (true) {
@@ -304,7 +304,7 @@ public interface Seq<T> {
     
     // 转化为带索引的流
     default BiSeq<T, Integer> zipWithIndex() {
-        return this.zipWith(naturalNumbers().hasMore());
+        return this.zipWith(naturalNumbers().more());
     }
     
     // 集合内两两结合的函数
