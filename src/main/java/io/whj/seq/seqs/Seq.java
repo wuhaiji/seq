@@ -18,10 +18,6 @@ import java.util.stream.Stream;
 @SuppressWarnings("unchecked")
 public interface Seq<T> {
     
-    
-    Seq<Object> NONE = c -> {
-    };
-    
     void consume(Consumer<T> consumer);
     
     static <T> Seq<T> unit(T t) {
@@ -47,24 +43,27 @@ public interface Seq<T> {
         };
     }
     
-    // 等差数列，左闭有开区间
+    // 等差数列，左闭有开区间, 如果流耗尽返回 none 信号
     // arithmeticProgression(0,1,10) => 0,1,2,3,4,5,6,7,8,9
-    static Seq<Integer> arithmeticProgression(int begin, int step, int limit) {
+    static Seq<More<Integer>> arithmeticProgression(int begin, int step, int limit) {
         int[] acc = {begin};
         return c -> {
             acc[0] += step;
             if (acc[0] < limit) {
-                c.accept(acc[0]);
+                c.accept(More.some(acc[0]));
+            } else {
+                c.accept(More.none());
             }
         };
     }
     
-    // 自然数列
-    static Seq<Integer> naturalNumbers() {
+    // 自然数列，左闭有开区间([begin,limit)), 如果流耗尽返回 none 信号
+    static Seq<More<Integer>> naturalNumbers() {
         return naturalNumbers(Integer.MAX_VALUE);
     }
     
-    static Seq<Integer> naturalNumbers(int limit) {
+    // 自然数列，左闭有开区间([begin,limit)), 如果流耗尽返回 none 信号
+    static Seq<More<Integer>> naturalNumbers(int limit) {
         return arithmeticProgression(0, 1, limit);
     }
     
@@ -298,20 +297,18 @@ public interface Seq<T> {
     }
     
     /**
-     * 使用 more 信号包装流，最后一直返回none的元素指示seq流已耗尽, 如果一直返回some表示是无限流
+     * 使用 more 信号包装流，最后返回none的元素指示seq流已耗尽(注意：会多执行一次 consumer), 如果一直返回some表示是无限流,
      */
     default Seq<More<T>> more() {
         return c -> {
             this.consume(t -> c.accept(More.some(t)));
-            while (true) {
-                c.accept(More.none());
-            }
+            c.accept(More.none());
         };
     }
     
     // 转化为带索引的流
     default BiSeq<T, Integer> zipWithIndex() {
-        return this.zipWith(naturalNumbers().more());
+        return this.zipWith(naturalNumbers());
     }
     
     // 集合内两两结合的函数
