@@ -1,4 +1,4 @@
-package io.whj.seq;
+package io.whj.seq.seqs;
 
 
 final class SeqStopException extends RuntimeException {
@@ -13,7 +13,7 @@ final class SeqStopException extends RuntimeException {
         super();
     }
     
-    static <T> T stop() {
+    static <T> void stop() {
         throw SeqStopException.INSTANCE;
     }
 }

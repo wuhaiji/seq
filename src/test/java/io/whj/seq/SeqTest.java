@@ -1,5 +1,6 @@
 package io.whj.seq;
 
+import io.whj.seq.seqs.Seq;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -7,8 +8,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class SeqTest {
     

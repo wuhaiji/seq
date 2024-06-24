@@ -1,4 +1,4 @@
-package io.whj.seq;
+package io.whj.seq.tuples;
 
 import java.util.Objects;
 
@@ -14,8 +14,8 @@ public class Tuple3<T1, T2, T3> implements Tuple {
         this.third = third;
     }
     
-    public static <T1, T2, T3> io.whj.seq.Tuple3<T1, T2, T3> of(T1 t1, T2 t2, T3 t3) {
-        return new io.whj.seq.Tuple3<>(t1, t2, t3);
+    public static <T1, T2, T3> Tuple3<T1, T2, T3> of(T1 t1, T2 t2, T3 t3) {
+        return new Tuple3<>(t1, t2, t3);
     }
     
     public T1 getFirst() {
@@ -51,7 +51,7 @@ public class Tuple3<T1, T2, T3> implements Tuple {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        io.whj.seq.Tuple3<?, ?, ?> tuple = (io.whj.seq.Tuple3<?, ?, ?>) o;
+        Tuple3<?, ?, ?> tuple = (Tuple3<?, ?, ?>) o;
         return Objects.equals(first, tuple.first) && Objects.equals(second, tuple.second) && Objects.equals(third, tuple.third);
     }
     

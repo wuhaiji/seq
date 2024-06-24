@@ -1,4 +1,8 @@
-package io.whj.seq;
+package io.whj.seq.seqs;
+
+import io.whj.seq.tuples.Tuple;
+import io.whj.seq.tuples.Tuple2;
+import io.whj.seq.tuples.Tuple3;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -17,9 +21,7 @@ public interface Seq<T> {
     void consume(Consumer<T> consumer);
     
     static <T> Seq<T> unit(T t) {
-        return c -> {
-            c.accept(t);
-        };
+        return c -> c.accept(t);
     }
     
     @SafeVarargs
@@ -468,27 +470,6 @@ public interface Seq<T> {
             });
         };
     }
-    
-    // 集合内两两结合的函数
-    default Seq<Tuple3<T, T, T>> triples() {
-        return c -> {
-            Object[] pre = {null, null};
-            this.consume(t -> {
-                pre[0] = pre[1];
-                pre[1] = t;
-            });
-            if (pre[0] != null && pre[1] != null) {
-                c.accept(Tuple.of((T) pre[0], (T) pre[1], null));
-            } else if (pre[0] != null) {
-                c.accept(Tuple.of((T) pre[0], null, null));
-            } else if (pre[1] != null) {
-                c.accept(Tuple.of(null, (T) pre[1], null));
-            } else {
-                c.accept(Tuple.of(null, null, null));
-            }
-        };
-    }
-    
     
 }
 

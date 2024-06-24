@@ -1,6 +1,4 @@
-package io.whj.seq;
-
-import java.util.Objects;
+package io.whj.seq.tuples;
 
 public interface Tuple {
     // Factory methods for creating Tuple instances
