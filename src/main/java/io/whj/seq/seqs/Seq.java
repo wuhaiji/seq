@@ -192,6 +192,11 @@ public interface Seq<T> {
         return c -> this.consume(t -> flatmapFn.apply(t).consume(c));
     }
     
+    // 平铺元素
+    default <R> Seq<R> flatMapIterable(Function<T, Iterable<R>> flatmapFn) {
+        return c -> this.consume(t -> flatmapFn.apply(t).forEach(c));
+    }
+ 
     default Seq<T> filter(Predicate<T> predicate) {
         return c -> {
             this.consume(t -> {
