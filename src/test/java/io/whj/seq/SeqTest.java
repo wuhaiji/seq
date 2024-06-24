@@ -357,7 +357,7 @@ class SeqTest {
     void pairs() {
         Seq<Integer> seq = Seq.of(1, 2, 3, 4, 5);
         
-        String joinString = seq.zipWithNext().map(v -> v.toString()).toJoinString(", ");
+        String joinString = seq.zipWithNext().map((v, index) -> bc -> bc.accept(v, index)).toJoinString(", ");
         
         Assertions.assertEquals("(1, 2), (2, 3), (3, 4), (4, 5)", joinString);
     }
