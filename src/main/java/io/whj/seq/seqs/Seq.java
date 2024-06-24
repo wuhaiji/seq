@@ -47,18 +47,25 @@ public interface Seq<T> {
         };
     }
     
-    // 等差数列
-    static Seq<Integer> arithmeticProgression(int begin, int step) {
+    // 等差数列，左闭有开区间
+    // arithmeticProgression(0,1,10) => 0,1,2,3,4,5,6,7,8,9
+    static Seq<Integer> arithmeticProgression(int begin, int step, int limit) {
         int[] acc = {begin};
         return c -> {
             acc[0] += step;
-            c.accept(acc[0]);
+            if (acc[0] < limit) {
+                c.accept(acc[0]);
+            }
         };
     }
     
     // 自然数列
     static Seq<Integer> naturalNumbers() {
-        return arithmeticProgression(0, 1);
+        return naturalNumbers(Integer.MAX_VALUE);
+    }
+    
+    static Seq<Integer> naturalNumbers(int limit) {
+        return arithmeticProgression(0, 1, limit);
     }
     
     static <T> Seq<T> of(Iterable<T> iterable) {
@@ -291,7 +298,7 @@ public interface Seq<T> {
     }
     
     /**
-     * 使用 more 信号包装成无限流，最后一直返回none的元素指示seq流已耗尽
+     * 使用 more 信号包装流，最后一直返回none的元素指示seq流已耗尽, 如果一直返回some表示是无限流
      */
     default Seq<More<T>> more() {
         return c -> {
