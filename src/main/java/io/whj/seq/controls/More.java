@@ -7,28 +7,28 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-// 定义 Maybe 接口, 完全遵照rust Option的规范语义,这里和java optional的语义有很大区别
+// 定义 More 接口, 表示流是否还有值, 传递存在信号
 
-public class Maybe<T> {
+public class More<T> {
     
     // 不允许其他包的类继承该类
-    Maybe() {
-        throw new IllegalStateException("can not new Maybe class");
+    More() {
+        throw new IllegalStateException("can not new More class");
     }
     
     T get() {
-        throw new IllegalStateException("can not invoke get on Maybe class");
+        throw new IllegalStateException("can not invoke get on More class");
     }
     
     public T getOrElse(T defaultValue) {
         return isNone() ? defaultValue : get();
     }
     
-    public <U> Maybe<Maybe<U>> map(Function<? super T, ? extends U> mapper) {
+    public <U> More<U> map(Function<? super T, ? extends U> mapper) {
         return isNone() ? none() : some(mapper.apply(this.get()));
     }
     
-    public Maybe<T> filter(Predicate<T> predicate) {
+    public More<T> filter(Predicate<T> predicate) {
         Predicate<T> negate = predicate.negate();
         if (isNone() || negate.test(this.get())) {
             return none();
@@ -37,7 +37,7 @@ public class Maybe<T> {
         }
     }
     
-    public Maybe<T> peek(Consumer<T> consumer) {
+    public More<T> peek(Consumer<T> consumer) {
         if (this.isSome()) {
             consumer.accept(this.get());
         }
@@ -64,7 +64,7 @@ public class Maybe<T> {
         return !isNone();
     }
     
-    public Maybe<T> orElse(Maybe<T> other) {
+    public More<T> orElse(More<T> other) {
         if (isNone()) {
             return other;
         } else {
@@ -72,19 +72,12 @@ public class Maybe<T> {
         }
     }
     
-    public Maybe<T> orElse(Supplier<Maybe<T>> supplier) {
+    public More<T> orElse(Supplier<More<T>> supplier) {
         if (isNone()) {
             return supplier.get();
         } else {
             return this;
         }
-    }
-    
-    private static <T> Maybe<T> ofNullable(T value) {
-        if (value == null) {
-            return None.none();
-        }
-        return new Some<>(value);
     }
     
     public Optional<T> toOptional() {
@@ -95,8 +88,8 @@ public class Maybe<T> {
         }
     }
     
-    public static <T> Some<Maybe<T>> some(T value) {
-        return new Some<>(ofNullable(value));
+    public static <T> Some<T> some(T value) {
+        return new Some<>(value);
     }
     
     @SuppressWarnings("unchecked")
@@ -105,7 +98,7 @@ public class Maybe<T> {
     }
     
     // Implementation of Some
-    private static final class Some<T> extends Maybe<T> {
+    private static final class Some<T> extends More<T> {
         private final T value;
         
         private Some(T value) {
@@ -119,7 +112,7 @@ public class Maybe<T> {
     }
     
     // Implementation of None
-    private static final class None<T> extends Maybe<T> {
+    private static final class None<T> extends More<T> {
         
         private None() {
             // Get the caller class name
