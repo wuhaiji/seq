@@ -8,35 +8,25 @@ import java.util.function.Supplier;
 
 // 定义 Option 接口
 
-
 public abstract class Option<T> {
     
-    public abstract boolean isPresent();
+    // 不允许其他包的类继承该类
+    Option() {
+    }
     
     public abstract T get();
     
+    @SuppressWarnings("unchecked")
     public T getOrElse(T defaultValue) {
-        if (isSome()) {
-            return this.get();
-        } else {
-            return defaultValue;
-        }
+        return isNone() ? (T) none() : get();
     }
     
     public <U> Option<U> map(Function<? super T, ? extends U> mapper) {
-        if (isSome()) {
-            return some(mapper.apply(this.get()));
-        } else {
-            return none();
-        }
+        return isNone() ? none() : some(mapper.apply(this.get()));
     }
     
     public <U> Option<U> flatMap(Function<? super T, Option<U>> mapper) {
-        if (isSome()) {
-            return mapper.apply(this.get());
-        } else {
-            return none();
-        }
+        return isNone() ? none() : mapper.apply(this.get());
     }
     
     public Option<T> filter(Predicate<T> predicate) {
@@ -119,28 +109,20 @@ public abstract class Option<T> {
         }
         
         @Override
-        public boolean isPresent() {
-            return true;
-        }
-        
-        @Override
         public T get() {
             return value;
         }
-        
-        
     }
     
     // Implementation of None
     private static final class None<T> extends Option<T> {
         
-        
         private None() {
-        }
-        
-        @Override
-        public boolean isPresent() {
-            return false;
+            // Get the caller class name
+            String callerClassName = new Throwable().getStackTrace()[1].getClassName();
+            if (!None.class.getName().equals(callerClassName)) {
+                throw new UnsupportedOperationException("Not allowed to new this class");
+            }
         }
         
         static final None<Object> NONE = new None<>();
