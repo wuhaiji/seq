@@ -7,7 +7,10 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-// 定义 More 接口, 表示流是否还有值, 传递存在信号
+/**
+ * 定义 More 接口, 表示容器是否还有值, 传递存在信号，用于无限流的终止控制
+ * @param <T>
+ */
 
 public class More<T> {
     
@@ -29,8 +32,7 @@ public class More<T> {
     }
     
     public More<T> filter(Predicate<T> predicate) {
-        Predicate<T> negate = predicate.negate();
-        if (isNone() || negate.test(this.get())) {
+        if (isNone() || predicate.negate().test(this.get())) {
             return none();
         } else {
             return this;
