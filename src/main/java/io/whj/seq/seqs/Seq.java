@@ -196,7 +196,7 @@ public interface Seq<T> {
     default <R> Seq<R> flatMapIterable(Function<T, Iterable<R>> flatmapFn) {
         return c -> this.consume(t -> flatmapFn.apply(t).forEach(c));
     }
- 
+    
     default Seq<T> filter(Predicate<T> predicate) {
         return c -> {
             this.consume(t -> {
@@ -317,15 +317,20 @@ public interface Seq<T> {
     }
     
     // 集合内两两结合的函数
-    default Seq<Tuple2<T, T>> zipWithNext() {
+    default BiSeq<T, T> zipWithNext() {
         return c -> {
             Object[] pre = {null};
+            final boolean[] isMoreThanTwoElement = {false};
             this.consume(t -> {
                 if (pre[0] != null) {
-                    c.accept(Tuple.of((T) pre[0], t));
+                    c.accept((T) pre[0], t);
+                    isMoreThanTwoElement[0] = true;
                 }
                 pre[0] = t;
             });
+            if (!isMoreThanTwoElement[0]) {
+                c.accept((T) pre[0], null);
+            }
         };
     }
     
