@@ -283,7 +283,7 @@ public interface Seq<T> {
                     if (e.isNone()) {
                         Stop.stop();
                     } else {
-                        c.accept(t, e.get());
+                        c.accept(t, e.toOptional().orElse(null));
                     }
                 });
             });
@@ -295,7 +295,7 @@ public interface Seq<T> {
      */
     default Seq<Option<T>> wrapWithOption() {
         return c -> {
-            this.consume(t -> c.accept(Option.ofNullable(t)));
+            this.consume(t -> c.accept(Option.some(t)));
             c.accept(Option.none());
         };
     }

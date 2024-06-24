@@ -7,15 +7,18 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-// 定义 Option 接口
+// 定义 Option 接口, 完全遵照rust Option的规范语义,这里和java optional的语义有很大区别
 
-public abstract class Option<T> {
+public class Option<T> {
     
     // 不允许其他包的类继承该类
     Option() {
+        throw new IllegalStateException("can not new Option class");
     }
     
-    public abstract T get();
+    T get() {
+        throw new IllegalStateException("can not invoke get on Option class");
+    }
     
     @SuppressWarnings("unchecked")
     public T getOrElse(T defaultValue) {
@@ -24,11 +27,6 @@ public abstract class Option<T> {
     
     public <U> Option<Option<U>> map(Function<? super T, ? extends U> mapper) {
         return isNone() ? none() : some(ofNullable(mapper.apply(this.get())));
-    }
-    
-    public <U> Option<U> flatMap(Function<? super T, Option<U>> mapper) {
-        T t = this.get();
-        return isNone() ? none() : mapper.apply(t);
     }
     
     public Option<T> filter(Predicate<T> predicate) {
@@ -83,7 +81,7 @@ public abstract class Option<T> {
         }
     }
     
-    public static <T> Option<T> ofNullable(T value) {
+    private static <T> Option<T> ofNullable(T value) {
         if (value == null) {
             return None.none();
         }
@@ -100,14 +98,12 @@ public abstract class Option<T> {
     
     
     public static <T> Option<T> some(T value) {
-        if (value == null) {
-            throw new NullPointerException("Value cannot be null");
-        }
         return new Some<>(value);
     }
     
-    public static <T> Option<T> none() {
-        return None.none();
+    @SuppressWarnings("unchecked")
+    public static <T> None<T> none() {
+        return (None<T>) None.NONE;
     }
     
     // Implementation of Some
@@ -119,7 +115,7 @@ public abstract class Option<T> {
         }
         
         @Override
-        public T get() {
+        T get() {
             return value;
         }
     }
@@ -137,16 +133,10 @@ public abstract class Option<T> {
         
         static final None<Object> NONE = new None<>();
         
-        @SuppressWarnings("unchecked")
-        public static <T> None<T> none() {
-            return (None<T>) NONE;
-        }
-        
         @Override
-        public T get() {
+        T get() {
             throw new NoSuchElementException("No value present");
         }
-        
         
     }
 }
