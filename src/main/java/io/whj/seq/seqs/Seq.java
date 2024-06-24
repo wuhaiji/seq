@@ -334,7 +334,6 @@ public interface Seq<T> {
     @SuppressWarnings("unchecked")
     default <R> R foldr(BiFunction<T, R, R> f, R initialValue) {
         Object[] b = {initialValue};
-        AtomicReference<R> result = new AtomicReference<>(initialValue);
         this.consume(t -> b[0] = f.apply(t, initialValue));
         return (R) b[0];
     }
