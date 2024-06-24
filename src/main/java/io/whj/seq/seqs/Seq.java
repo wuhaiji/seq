@@ -276,14 +276,14 @@ public interface Seq<T> {
         };
     }
     
-    default <E> BiSeq<T, E> zipWith(Seq<Maybe<E>> other) {
+    default <E> BiSeq<T, E> zipWith(Seq<Maybe<Maybe<E>>> other) {
         return c -> {
             consumeUtilStop(t -> {
                 other.consume(e -> {
                     if (e.isNone()) {
                         Stop.stop();
                     } else {
-                        c.accept(t, e.toOptional().orElse(null));
+                        c.accept(t, e.toOptional().flatMap(Maybe::toOptional).orElse(null));
                     }
                 });
             });
@@ -293,7 +293,7 @@ public interface Seq<T> {
     /**
      * 使用option包装，最后会额外生成一个none的元素指示seq流已耗尽
      */
-    default Seq<Maybe<T>> wrapWithValue() {
+    default Seq<Maybe<Maybe<T>>> wrapWithValue() {
         return c -> {
             this.consume(t -> c.accept(Maybe.some(t)));
             c.accept(Maybe.none());

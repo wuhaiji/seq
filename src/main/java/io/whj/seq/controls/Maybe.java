@@ -25,7 +25,7 @@ public class Maybe<T> {
     }
     
     public <U> Maybe<Maybe<U>> map(Function<? super T, ? extends U> mapper) {
-        return isNone() ? none() : some(ofNullable(mapper.apply(this.get())));
+        return isNone() ? none() : some(mapper.apply(this.get()));
     }
     
     public Maybe<T> filter(Predicate<T> predicate) {
@@ -95,8 +95,8 @@ public class Maybe<T> {
         }
     }
     
-    public static <T> Maybe<T> some(T value) {
-        return new Some<>(value);
+    public static <T> Some<Maybe<T>> some(T value) {
+        return new Some<>(ofNullable(value));
     }
     
     @SuppressWarnings("unchecked")
