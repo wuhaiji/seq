@@ -2,7 +2,6 @@ package io.whj.seq.seqs;
 
 import io.whj.seq.tuples.Tuple;
 import io.whj.seq.tuples.Tuple2;
-import io.whj.seq.tuples.Tuple3;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -76,19 +75,19 @@ public interface Seq<T> {
     }
     
     
-    default <K, V> Map<K, V> toMap(BiConsumer<T, HashMap<K, V>> mapper) {
+    default <K, V> Map<K, V> toMapOptional(BiConsumer<T, HashMap<K, V>> mapper) {
         HashMap<K, V> map = new HashMap<>();
         consume(t -> mapper.accept(t, map));
         return map;
     }
     
-    default <K, V> Map<K, V> toMapNotNull(
+    default <K, V> Map<K, V> toMapOptional(
             Function<T, K> keyFn,
             Function<T, V> valueFn,
             // 元素冲突时默认采取策略（保留旧值，还是新值）
             BiFunction<V, V, V> conflictFn
     ) {
-        return toMap((t, map) -> {
+        return toMapOptional((t, map) -> {
             if (t == null) {
                 map.put(null, null);
             } else {
@@ -104,12 +103,12 @@ public interface Seq<T> {
         });
     }
     
-    // 元素冲突时默认采取新值放入map
-    default <K, V> Map<K, V> toMapNotNull(
+    // 元素为空时直接放入
+    default <K, V> Map<K, V> toMap(
             Function<T, K> keyFn,
             Function<T, V> valueFn
     ) {
-        return toMap((t, map) -> {
+        return toMapOptional((t, map) -> {
             if (t == null) {
                 map.put(null, null);
             } else {
@@ -121,11 +120,11 @@ public interface Seq<T> {
     }
     
     // 转Map, 允许null元素所以不会对集合中的null元素过滤, keyFn,valueFn 需要自行处理nullable元素
-    default <K, V> Map<K, V> toMapNullable(
+    default <K, V> Map<K, V> toMapOptional(
             Function<Optional<T>, K> keyFn,
             Function<Optional<T>, V> valueFn
     ) {
-        return toMap((t, map) -> {
+        return toMapOptional((t, map) -> {
             Optional<T> tOpt = Optional.ofNullable(t);
             map.put(keyFn.apply(tOpt), valueFn.apply(tOpt));
         });
@@ -134,6 +133,37 @@ public interface Seq<T> {
     
     default <R> Seq<R> map(Function<T, R> mapFn) {
         return c -> this.consume(t -> c.accept(mapFn.apply(t)));
+    }
+    
+    // 如果条件为真就执行mapper
+    default <R> Seq<R> map(Function<T, R> mapper, Predicate<T> predicate) {
+        return c -> {
+            this.consume(t -> {
+                if (predicate.test(t)) {
+                    c.accept(mapper.apply(t));
+                }
+            });
+        };
+    }
+    
+    // 如果element不为空就执行mapper
+    default <R> Seq<R> mapNotNull(Function<T, R> mapper) {
+        return this.map(mapper, Objects::nonNull);
+    }
+    
+    // mapNotNull
+    default <R> BiSeq<Integer, R> mapWithIndex(Function<T, R> mapper) {
+        int[] index = {0};
+        return c -> {
+            this.map(mapper, Objects::nonNull).consume(t -> {
+                c.accept(index[0], t);
+                index[0]++;
+            });
+        };
+    }
+    
+    default BiSeq<Integer, T> mapWithIndex() {
+        return this.mapWithIndex(v -> v);
     }
     
     default <R> Seq<R> flatMap(Function<T, Seq<R>> flatmapFn) {
@@ -153,7 +183,7 @@ public interface Seq<T> {
     default void consumeUtilStop(Consumer<T> consumer) {
         try {
             this.consume(consumer);
-        } catch (SeqStopException ignore) {
+        } catch (Stop ignore) {
             // 这里异常只是用来传递break信号，打断循环
         }
     }
@@ -165,12 +195,22 @@ public interface Seq<T> {
                 c.accept(t);
                 i[0]++;
             } else {
-                SeqStopException.stop();
+                Stop.stop();
             }
         });
     }
     
-    // 注意 先 take 再 drop 可能和你想的不一样
+    default Seq<T> take(Predicate<T> predicate) {
+        return c -> consumeUtilStop(t -> {
+            if (predicate.test(t)) {
+                c.accept(t);
+            } else {
+                Stop.stop();
+            }
+        });
+    }
+    
+    // 注意： 如果先take再drop可能和你想的不一样
     default Seq<T> drop(int n) {
         int[] i = {0};
         return c -> this.consume(t -> {
@@ -178,6 +218,14 @@ public interface Seq<T> {
                 c.accept(t);
             }
             i[0]++;
+        });
+    }
+    
+    default Seq<T> drop(Predicate<T> predicate) {
+        return c -> this.consume(t -> {
+            if (predicate.test(t)) {
+                c.accept(t);
+            }
         });
     }
     
@@ -193,7 +241,7 @@ public interface Seq<T> {
                 if (iterator.hasNext()) {
                     c.accept(Tuple.of(t, iterator.next()));
                 } else {
-                    SeqStopException.stop();
+                    Stop.stop();
                 }
             });
         };
@@ -206,8 +254,21 @@ public interface Seq<T> {
                 if (iterator.hasNext()) {
                     c.accept(function.apply(t, iterator.next()));
                 } else {
-                    SeqStopException.stop();
+                    Stop.stop();
                 }
+            });
+        };
+    }
+    
+    // 集合内两两结合的函数
+    default Seq<Tuple2<T, T>> zipWithNext() {
+        return c -> {
+            Object[] pre = {null};
+            this.consume(t -> {
+                if (pre[0] != null) {
+                    c.accept(Tuple.of((T) pre[0], t));
+                }
+                pre[0] = t;
             });
         };
     }
@@ -257,7 +318,7 @@ public interface Seq<T> {
     }
     
     @SuppressWarnings("unchecked")
-    default Seq<T> flat() {
+    default Seq<T> flatten() {
         return c -> {
             this.consume(t -> {
                 if (t instanceof Object[]) {
@@ -279,7 +340,6 @@ public interface Seq<T> {
     
     // reverse
     default Seq<T> reverse() {
-        // 没有优化的办法吗，一定要遍历一遍吗
         return c -> {
             List<T> list = new ArrayList<>();
             this.consume(list::add);
@@ -350,27 +410,6 @@ public interface Seq<T> {
         });
     }
     
-    // mapNotNull
-    default <R> Seq<R> mapNotNull(Function<T, R> mapper) {
-        return c -> this.consume(t -> {
-            if (t != null) {
-                c.accept(mapper.apply(t));
-            }
-        });
-    }
-    
-    // mapUntilNull
-    default <R> Seq<R> mapUntilNull(Function<T, R> mapper) {
-        return c -> this.consume(t -> {
-            R r = mapper.apply(t);
-            if (r != null) {
-                c.accept(r);
-            } else {
-                SeqStopException.stop();
-            }
-        });
-    }
-    
     // tail
     default Seq<T> tail() {
         return c -> {
@@ -404,7 +443,7 @@ public interface Seq<T> {
         consumeUtilStop(t -> {
             if (predicate.test(t)) {
                 b[0] = t;
-                SeqStopException.stop();
+                Stop.stop();
             }
         });
         return Optional.ofNullable((T) b[0]);
@@ -457,19 +496,6 @@ public interface Seq<T> {
         return this.sort(comparator).head();
     }
     
-    
-    // 集合内两两结合的函数
-    default Seq<Tuple2<T, T>> pairs() {
-        return c -> {
-            Object[] pre = {null};
-            this.consume(t -> {
-                if (pre[0] != null) {
-                    c.accept(Tuple.of((T) pre[0], t));
-                }
-                pre[0] = t;
-            });
-        };
-    }
     
 }
 

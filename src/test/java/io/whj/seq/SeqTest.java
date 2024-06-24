@@ -255,7 +255,7 @@ class SeqTest {
         Integer[] integers = {1, 2, 3, 4, 5, 6};
         
         Map<String, String> actualMap = Seq.of(integers)
-                .map(Object::toString).toMapNotNull(keyFn, Function.identity());
+                .map(Object::toString).toMap(keyFn, Function.identity());
         
         Map<String, String> expectMap = Stream.of(integers)
                 .map(Object::toString).collect(Collectors.toMap(keyFn, v -> v));
@@ -270,7 +270,7 @@ class SeqTest {
         Integer[] integers = {1, 2, 3};
         
         Map<Optional<String>, Optional<String>> actualMap = Seq.of(integers)
-                .map(Object::toString).toMapNullable(keyFn, Function.identity());
+                .map(Object::toString).toMapOptional(keyFn, Function.identity());
         
         Assertions.assertEquals(
                 "{Optional[1_i32]=Optional[1], Optional[2_i32]=Optional[2], Optional[3_i32]=Optional[3]}",
@@ -357,7 +357,7 @@ class SeqTest {
     void pairs() {
         Seq<Integer> seq = Seq.of(1, 2, 3, 4, 5);
         
-        String joinString = seq.pairs().map(v -> v.toString()).toJoinString(", ");
+        String joinString = seq.zipWithNext().map(v -> v.toString()).toJoinString(", ");
         
         Assertions.assertEquals("(1, 2), (2, 3), (3, 4), (4, 5)", joinString);
     }
