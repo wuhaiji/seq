@@ -283,7 +283,7 @@ public interface Seq<T> {
                     if (e.isNone()) {
                         Stop.stop();
                     } else {
-                        c.accept(t, e.toOptional().orElse(null));
+                        c.accept(t, e.getOrElse(null));
                     }
                 });
             });
