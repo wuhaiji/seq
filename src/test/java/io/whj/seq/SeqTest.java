@@ -346,7 +346,7 @@ class SeqTest {
     void zipWith() {
         Seq<Integer> seq = Seq.of(1, 2, 3);
         
-        String joinString = seq.zipWith(Seq.of('a', 'b', 'c').toList(), (q, w) -> q + "_" + w).toJoinString(",");
+        String joinString = seq.zipWith(Seq.of('a', 'b', 'c').toList()).toJoinString(",");
         
         Assertions.assertEquals("1_a,2_b,3_c", joinString);
     }

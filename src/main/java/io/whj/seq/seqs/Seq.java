@@ -17,6 +17,10 @@ import java.util.stream.Stream;
 @SuppressWarnings("unchecked")
 public interface Seq<T> {
     
+    
+    Seq<Object> NONE = c -> {
+    };
+    
     void consume(Consumer<T> consumer);
     
     static <T> Seq<T> unit(T t) {
@@ -32,6 +36,14 @@ public interface Seq<T> {
         };
     }
     
+    static <T> Seq<T> none() {
+        return (Seq<T>) NONE;
+    }
+    
+    static <T> Seq<T> some(T t) {
+        return unit(t);
+    }
+    
     static <T> Seq<T> of(Iterator<T> iterable) {
         return c -> {
             while (iterable.hasNext()) {
@@ -40,6 +52,20 @@ public interface Seq<T> {
             }
             
         };
+    }
+    
+    // 等差数列
+    static Seq<Integer> arithmeticProgression(int begin, int step) {
+        int[] acc = {begin};
+        return c -> {
+            acc[0] += step;
+            c.accept(acc[0]);
+        };
+    }
+    
+    // 自然数列
+    static Seq<Integer> naturalNumbers() {
+        return arithmeticProgression(0, 1);
     }
     
     static <T> Seq<T> of(Iterable<T> iterable) {
@@ -151,7 +177,7 @@ public interface Seq<T> {
         return this.map(mapper, Objects::nonNull);
     }
     
-    // mapNotNull
+    // 转化为带索引的流
     default <R> BiSeq<Integer, R> mapWithIndex(Function<T, R> mapper) {
         int[] index = {0};
         return c -> {
@@ -162,10 +188,7 @@ public interface Seq<T> {
         };
     }
     
-    default BiSeq<Integer, T> mapWithIndex() {
-        return this.mapWithIndex(v -> v);
-    }
-    
+    // 平铺元素
     default <R> Seq<R> flatMap(Function<T, Seq<R>> flatmapFn) {
         return c -> this.consume(t -> flatmapFn.apply(t).consume(c));
     }
@@ -247,17 +270,32 @@ public interface Seq<T> {
         };
     }
     
-    default <E, R> Seq<R> zipWith(Iterable<E> other, BiFunction<T, E, R> function) {
+    default <E> BiSeq<T, E> zipWith(Iterable<E> other) {
         return c -> {
             Iterator<E> iterator = other.iterator();
             consumeUtilStop(t -> {
                 if (iterator.hasNext()) {
-                    c.accept(function.apply(t, iterator.next()));
+                    c.accept(t, iterator.next());
                 } else {
                     Stop.stop();
                 }
             });
         };
+    }
+    
+    
+    default Seq<Seq<T>> finite() {
+        return c -> {
+            this.consume(t -> {
+                c.accept(some(t));
+            });
+            c.accept(none());
+        };
+    }
+    
+    // 转化为带索引的流
+    default BiSeq<T, Integer> zipWithIndex() {
+        return this.zipWith(naturalNumbers().toList());
     }
     
     // 集合内两两结合的函数

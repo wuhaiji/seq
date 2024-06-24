@@ -1,4 +1,4 @@
 package io.whj.seq.functions;
 
-public interface Fn<R> {
+public interface Function<R> {
 }
