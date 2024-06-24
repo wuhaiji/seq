@@ -22,11 +22,15 @@ public abstract class Option<T> {
     }
     
     public <U> Option<U> map(Function<? super T, ? extends U> mapper) {
-        return isNone() ? none() : some(mapper.apply(this.get()));
+        return isNone() ? none() : ofNullable(mapper.apply(this.get()));
     }
     
     public <U> Option<U> flatMap(Function<? super T, Option<U>> mapper) {
-        return isNone() ? none() : mapper.apply(this.get());
+        Option<U> mapped = mapper.apply(this.get());
+        if (mapped == null) {
+            return none();
+        }
+        return isNone() ? none() : mapped;
     }
     
     public Option<T> filter(Predicate<T> predicate) {
