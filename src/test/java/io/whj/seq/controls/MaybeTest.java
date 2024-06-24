@@ -8,81 +8,81 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.NoSuchElementException;
 
 
-class OptionTest {
+class MaybeTest {
     
     @Test
     void testSomeCreation() {
-        Option<String> some = Option.some("Hello");
+        Maybe<String> some = Maybe.some("Hello");
         assertTrue(some.isSome());
         assertEquals("Hello", some.get());
     }
     
     @Test
     void testNoneCreation() {
-        Option<String> none = Option.none();
+        Maybe<String> none = Maybe.none();
         assertTrue(none.isNone());
         assertThrows(NoSuchElementException.class, none::get);
     }
     
 //    @Test
 //    void testOfNullable() {
-//        Option<String> some = Option.ofNullable("Hello");
+//        Maybe<String> some = Maybe.ofNullable("Hello");
 //        assertTrue(some.isSome());
 //        assertEquals("Hello", some.get());
 //
-//        Option<String> none = Option.ofNullable(null);
+//        Maybe<String> none = Maybe.ofNullable(null);
 //        assertTrue(none.isNone());
 //    }
     
     @Test
     void testGetOrElse() {
-        Option<String> some = Option.some("Hello");
+        Maybe<String> some = Maybe.some("Hello");
         assertEquals("Hello", some.getOrElse("Default"));
         
-        Option<String> none = Option.none();
+        Maybe<String> none = Maybe.none();
         assertEquals("Default", none.getOrElse("Default"));
     }
     
     @Test
     void testMap() {
-        Option<Option<Integer>> hello = Option.some("Hello").map(String::length);
+        Maybe<Maybe<Integer>> hello = Maybe.some("Hello").map(String::length);
         assertTrue(hello.isSome());
-        assertEquals(Option.some(5), hello.get());
+        assertEquals(Maybe.some(5), hello.get());
         
     }
     
     @Test
     void testFilter() {
-        Option<String> some = Option.some("Hello").filter(s -> s.length() > 3);
+        Maybe<String> some = Maybe.some("Hello").filter(s -> s.length() > 3);
         assertTrue(some.isSome());
         
-        Option<String> filteredNone = Option.some("Hi").filter(s -> s.length() > 3);
+        Maybe<String> filteredNone = Maybe.some("Hi").filter(s -> s.length() > 3);
         assertTrue(filteredNone.isNone());
         
-        Option<String> none = Option.none();
+        Maybe<String> none = Maybe.none();
         assertTrue(none.filter(s -> s.length() > 3).isNone());
     }
 
 //    @Test
 //    void testPeek() {
 //        StringBuilder sb = new StringBuilder();
-//        Option.some("Hello").peek(sb::append);
+//        Maybe.some("Hello").peek(sb::append);
 //        assertEquals("Hello", sb.toString());
 //
-//        Option.none().peek(sb::append);
+//        Maybe.none().peek(sb::append);
 //        assertEquals("Hello", sb.toString()); // No change
 //    }
 //
 //    @Test
 //    void testIfSome() {
 //        StringBuilder sb = new StringBuilder();
-//        Option.some("Hello").ifSome(value -> {
+//        Maybe.some("Hello").ifSome(value -> {
 //            sb.append(value);
 //            return null;
 //        });
 //        assertEquals("Hello", sb.toString());
 //
-//        Option.none().ifSome(value -> {
+//        Maybe.none().ifSome(value -> {
 //            sb.append(value);
 //            return null;
 //        });
@@ -92,42 +92,42 @@ class OptionTest {
 //    @Test
 //    void testIfNone() {
 //        StringBuilder sb = new StringBuilder();
-//        Option.none().ifNone(() -> sb.append("None"));
+//        Maybe.none().ifNone(() -> sb.append("None"));
 //        assertEquals("None", sb.toString());
 //
-//        Option.some("Hello").ifNone(() -> sb.append("None"));
+//        Maybe.some("Hello").ifNone(() -> sb.append("None"));
 //        assertEquals("None", sb.toString()); // No change
 //    }
 //
 //    @Test
 //    void testOrElse() {
-//        Option<String> some = Option.some("Hello").orElse(Option.some("Default"));
+//        Maybe<String> some = Maybe.some("Hello").orElse(Maybe.some("Default"));
 //        assertTrue(some.isSome());
 //        assertEquals("Hello", some.get());
 //
-//        Option<String> none = Option.none().orElse(Option.some("Default"));
+//        Maybe<String> none = Maybe.none().orElse(Maybe.some("Default"));
 //        assertTrue(none.isSome());
 //        assertEquals("Default", none.get());
 //    }
 //
 //    @Test
 //    void testOrElseSupplier() {
-//        Option<String> some = Option.some("Hello").orElse(() -> Option.some("Default"));
+//        Maybe<String> some = Maybe.some("Hello").orElse(() -> Maybe.some("Default"));
 //        assertTrue(some.isSome());
 //        assertEquals("Hello", some.get());
 //
-//        Option<String> none = Option.none().orElse(() -> Option.some("Default"));
+//        Maybe<String> none = Maybe.none().orElse(() -> Maybe.some("Default"));
 //        assertTrue(none.isSome());
 //        assertEquals("Default", none.get());
 //    }
 //
 //    @Test
 //    void testToOptional() {
-//        Optional<String> optionalSome = Option.some("Hello").toOptional();
+//        Optional<String> optionalSome = Maybe.some("Hello").toOptional();
 //        assertTrue(optionalSome.isPresent());
 //        assertEquals("Hello", optionalSome.get());
 //
-//        Optional<String> optionalNone = Option.none().toOptional();
+//        Optional<String> optionalNone = Maybe.none().toOptional();
 //        assertTrue(optionalNone.isEmpty());
 //    }
 }

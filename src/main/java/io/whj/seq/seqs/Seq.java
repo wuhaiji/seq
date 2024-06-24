@@ -1,6 +1,6 @@
 package io.whj.seq.seqs;
 
-import io.whj.seq.controls.Option;
+import io.whj.seq.controls.Maybe;
 import io.whj.seq.tuples.Tuple;
 import io.whj.seq.tuples.Tuple2;
 
@@ -276,7 +276,7 @@ public interface Seq<T> {
         };
     }
     
-    default <E> BiSeq<T, E> zipWith(Seq<Option<E>> other) {
+    default <E> BiSeq<T, E> zipWith(Seq<Maybe<E>> other) {
         return c -> {
             consumeUtilStop(t -> {
                 other.consume(e -> {
@@ -293,16 +293,16 @@ public interface Seq<T> {
     /**
      * 使用option包装，最后会额外生成一个none的元素指示seq流已耗尽
      */
-    default Seq<Option<T>> wrapWithOption() {
+    default Seq<Maybe<T>> wrapWithValue() {
         return c -> {
-            this.consume(t -> c.accept(Option.some(t)));
-            c.accept(Option.none());
+            this.consume(t -> c.accept(Maybe.some(t)));
+            c.accept(Maybe.none());
         };
     }
     
     // 转化为带索引的流
     default BiSeq<T, Integer> zipWithIndex() {
-        return this.zipWith(naturalNumbers().wrapWithOption());
+        return this.zipWith(naturalNumbers().wrapWithValue());
     }
     
     // 集合内两两结合的函数
